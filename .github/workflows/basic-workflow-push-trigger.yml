@@ -1,0 +1,25 @@
+name: Basic Workflow - Push Trigger
+
+# Controls when the action will run. Workflow runs when code is pushed to main
+on:
+  push:
+    branches:
+      - main
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "greet"
+  greet:
+    # Display name for the job
+    name: "Greetings, Program!"
+
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Runs command(s) using the runners shell
+      - name: Send greeting
+        run: |
+          echo "Hi from push trigger workflow!"
+          echo "This workflow runs automatically when code is pushed to main branch"
