@@ -1,48 +1,48 @@
-# Display name of workflow
+# Display name of the workflow
 name: Chaining Jobs
 
-# Controls when the action will run. Workflow runs when manually triggered using the UI or API.
+# Trigger: this workflow can be started manually from GitHub UI
 on:
   workflow_dispatch:
-    # Inputs the workflow accepts.
-    inputs:
-      run-job-3:
+    inputs:                      # User inputs when running manually
+      run-job-3:                 # Boolean input to decide if Job 3 should run
         description: "Run job 3"
         required: true
         type: boolean
 
 jobs:
-  job-1:
+  job-1:                         # First job in the workflow
     name: Job 1
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest       # Uses a GitHub-hosted Ubuntu runner
     steps:
       - name: Output for Job 1
         run: echo "Hello from Job 1. Run Job 3 equals ${{ github.event.inputs.run-job-3 }}"
+        # Here we access the input value and print it (true/false)
 
-  job-2:
+  job-2:                         # Second job
     name: Job 2
     runs-on: ubuntu-latest
-    needs:
+    needs:                       # Job 2 will only run after Job 1 completes successfully
       - job-1
     steps:
       - name: Output for Job 2
         run: echo "Hello from Job 2"
-    
-  job-3:
+
+  job-3:                         # Third job
     name: Job 3
-    if: github.event.inputs.run-job-3 == 'true'
+    if: github.event.inputs.run-job-3 == 'true'   # This job runs only if the input checkbox was true
     runs-on: ubuntu-latest
     needs:
-      - job-1
+      - job-1                    # Job 3 also depends on Job 1
     steps:
       - name: Output for Job 3
         run: echo "Hello from Job 3"
 
-  job-4:
+  job-4:                         # Fourth job
     name: Job 4
     runs-on: ubuntu-latest
-    if: always() 
-    needs:
+    if: always()                 # Ensures Job 4 will always run, even if previous jobs failed or were skipped
+    needs:                       # Still requires both Job 2 and Job 3 to finish first
       - job-2
       - job-3
     steps:

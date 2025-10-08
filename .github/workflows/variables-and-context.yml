@@ -1,80 +1,65 @@
-# I am a workflow that demonstrates how to output the different context objects
-
+# A workflow that demonstrates GitHub context, outputs, and environment variables
 name: Variables and Context
 
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
+# Trigger: run manually from GitHub UI
 on:
   workflow_dispatch:
-    # Inputs the workflow accepts.
     inputs:
       name:
-        # Friendly description to be shown in the UI instead of 'name'
         description: 'Person to greet'
-        # Default value if no value is explicitly provided
         default: 'World'
-        # Input has to be provided for the workflow to run
         required: true
 
+# Workflow-level environment variables (available to all jobs)
 env:
   VAR1: myworkflowvar1
   VAR2: myworkflowvar2
   VAR3: myworkflowvar3
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  job1:
-    runs-on: ubuntu-latest 
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+  job1:                       # Job 1 - show GitHub context
+    runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
         env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      
-  #step/job output variables
-  job2:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}   # Convert context object to JSON
+        run: echo "$GITHUB_CONTEXT"              # Print it to logs
+
+  job2:                       # Job 2 - demonstrate step and job outputs
     runs-on: ubuntu-latest
-    
-    outputs:
+    outputs:                  # Job-level outputs (exposed to other jobs)
       output1: ${{ steps.step1.outputs.step1value }}
       output2: ${{ steps.step2.outputs.step2value }}
-    
     steps:
       - name: Step 1
-        id: step1
-        # run: echo "::set-output name=step1value::hello"
-        run: echo "step1value=hello" >> $GITHUB_OUTPUT
+        id: step1             # Step ID so we can reference it later
+        run: echo "step1value=hello" >> $GITHUB_OUTPUT   # Create step output
 
       - name: Step 2
         id: step2
-        # run: echo "::set-output name=step2value::world"
-        run: echo "step2value=world" >> $GITHUB_OUTPUT
-  
-  job3:
-    runs-on: ubuntu-latest
-    needs: job2
-    steps:
-      - run: echo ${{needs.job2.outputs.output1}} ${{needs.job2.outputs.output2}}
+        run: echo "step2value=world" >> $GITHUB_OUTPUT   # Create step output
 
-  # access/set env variables
-  job4:
+  job3:                       # Job 3 - consume outputs from Job 2
     runs-on: ubuntu-latest
-    env:
+    needs: job2               # Must wait for job2 to finish
+    steps:
+      - run: echo ${{ needs.job2.outputs.output1 }} ${{ needs.job2.outputs.output2 }}
+        # Should print "hello world"
+
+  job4:                       # Job 4 - environment variable precedence
+    runs-on: ubuntu-latest
+    env:                      # Job-level variables (override workflow-level ones)
       VAR2: myjobvar2
       VAR3: myjobvar3
     steps:
-
       - run: |
-          echo $VAR1
-          echo ${{env.VAR1}}
+          echo $VAR1          # Workflow-level variable
+          echo ${{ env.VAR1 }} # Another way to access env variables
 
           echo ""
 
-          echo $VAR2
-
-          echo $VAR3
+          echo $VAR2          # Job-level variable overrides workflow-level
+          echo $VAR3          # Step-level variable (defined below) overrides job-level
         env: 
-          VAR3: mystepvar3
+          VAR3: mystepvar3    # Step-level variable (highest precedence)
